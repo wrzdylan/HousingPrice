@@ -43,14 +43,14 @@ all_data_na = all_data_na.drop(all_data_na[all_data_na == 0].index).sort_values(
 missing_data = pd.DataFrame({'Missing Ratio' :all_data_na})
 missing_data.head(20)
 ```
-Remplace NA par None
-Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire
+Remplace NA par None        
+Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire        
 `all_data["LotFrontage"] = all_data.groupby("Neighborhood")["LotFrontage"].transform(
     lambda x: x.fillna(x.median()))`
-Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0
-'MSZoning' by 'RL', Functional by Typ
-Peut drop 'Utilities' car uniquement la même valeur 
-Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec `all_data['Electrical'] = all_data['Electrical'].fillna(all_data['Electrical'].mode()[0])`
+Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0         
+'MSZoning' by 'RL', Functional by Typ          
+Peut drop 'Utilities' car uniquement la même valeur           
+Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec `all_data['Electrical'] = all_data['Electrical'].fillna(all_data['Electrical'].mode()[0])`          
 - Transform variables types
   - Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
   - LabelEncoder some categorical variables :
