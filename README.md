@@ -36,21 +36,12 @@ Approche linéaire :
 ## Clean
 - Ajoute log SalePrice in cleaned data
 - Missing values
-```python
-# Donne la proportion des missing values
-all_data_na = (df.isnull().sum() / len(df)) * 100
-all_data_na = all_data_na.drop(all_data_na[all_data_na == 0].index).sort_values(ascending=False)[:30]
-missing_data = pd.DataFrame({'Missing Ratio' :all_data_na})
-missing_data.head(20)
-```
-Remplace NA par None        
-Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire        
-`all_data["LotFrontage"] = all_data.groupby("Neighborhood")["LotFrontage"].transform(
-    lambda x: x.fillna(x.median()))`
-Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0         
-'MSZoning' by 'RL', Functional by Typ          
-Peut drop 'Utilities' car uniquement la même valeur           
-Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec `all_data['Electrical'] = all_data['Electrical'].fillna(all_data['Electrical'].mode()[0])`          
+  - [X] Remplace NA par None        
+  - [X] Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire
+  - [] Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0         
+  - [] 'MSZoning' by 'RL', Functional by Typ          
+  - [] Peut drop 'Utilities' car uniquement la même valeur           
+  - [] Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec `all_data['Electrical'] = all_data['Electrical'].fillna(all_data['Electrical'].mode()[0])`          
 - Transform variables types
   - Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
   - LabelEncoder some categorical variables :
@@ -91,3 +82,8 @@ print(df.shape)
 
 ## Lexique
 - dummy variables, valeurs numériques qui représentent des données de catégories
+- [diff between apply and transform](https://towardsdatascience.com/difference-between-apply-and-transform-in-pandas-242e5cf32705)
+  - transform() peut utiliser des function strings, des list de functions (ex: `df.transform([np.sqrt, np.exp])`) et des dictionnaires de functions
+  - transform() ne peut pas produire des résultats aggrégés (ex: `df.transform(lambda x:x.sum())`)
+  - transform() ne peut pas travailler avec +sieurs Series en même temps (ex: `df.transform(subtract_two, axis=1)` où subtract_two fait une vectorization entre 2 colonnes)
+  - Avec un **groupby()**, transform() renvoie une série avec la même longueur, c'est son **principale avantage**.

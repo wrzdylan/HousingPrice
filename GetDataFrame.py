@@ -21,40 +21,57 @@ class GetDataFrame:
         self.feature_outlier_count = {}
         self.house_price = {}
 
-        # self.shape = self.df.shape
-        # self.info = self.df.info()
-
     def get_cleaned_df(self):
+        # Unnecessary for  the prediction process
         self.df.drop("Id", axis=1, inplace=True)
+
+        # Add some columns to fill with None values
         na_columns = [
+            "PoolQC",
+            "MiscFeature",
             "Alley",
-            "BsmtQual",
-            "BsmtCond",
-            "BsmtExposure",
-            "BsmtFinType1",
-            "BsmtFinType2",
+            "Fence",
             "FireplaceQu",
             "GarageType",
             "GarageFinish",
             "GarageQual",
             "GarageCond",
-            "PoolQC",
-            "Fence",
-            "MiscFeature",
+            "BsmtQual",
+            "BsmtCond",
+            "BsmtExposure",
+            "BsmtFinType1",
+            "BsmtFinType2",
+            "MasVnrType",
+            "MSSubClass"
         ]
-        self.df[na_columns] = self.df[na_columns].fillna("NA")
-        self.df["LotFrontage"] = self.df.groupby(["Neighborhood", "LotConfig"])[
-            "LotFrontage"
-        ].apply(lambda x: np.Nan if x.median() == np.NaN else x.fillna(x.median()))
-        self.df["LotFrontage"] = self.df.groupby(["LotConfig"])["LotFrontage"].apply(
+        # Example: data description for PoolQC says NA mean no pool
+        self.df[na_columns] = self.df[na_columns].fillna("None")
+
+        # transform instead of apply and group by with one index
+        self.df["LotFrontage"] = self.df.groupby(["Neighborhood"])["LotFrontage"].transform(
             lambda x: x.fillna(x.median())
         )
-        self.df.loc[self.df.GarageYrBlt.isnull(), "GarageYrBlt"] = self.df.loc[
-            self.df.GarageYrBlt.isnull(), "YearBuilt"
+
+        # Columns to fill with 0 values
+        na_numerical_columns = [
+            "MasVnrArea",
+            "GarageYrBlt",
+            "GarageArea",
+            "GarageCars",
+            "BsmtFinSF1",
+            "BsmtFinSF2",
+            "BsmtUnfSF",
+            "TotalBsmtSF",
+            "BsmtFullBath",
+            "BsmtHalfBath"
         ]
-        # fill 0 and Not Present for numerical and categorical feature's null values
-        self.df.MasVnrArea.fillna(0, inplace=True)
+        # Example: NA value for Bsmt mean no Bsmt, same for GarageYrBlt because no garage
+        self.df[na_numerical_columns] = self.df[na_numerical_columns].fillna("None")
+
+        # ---> I'm HERE <---
+
         self.df.MasVnrType.fillna("Not present", inplace=True)
+
         # Adding square feet of first floor and second floor
         self.df["TotalFlrSFAbvGrd"] = self.df[["1stFlrSF", "2ndFlrSF"]].sum(axis=1)
         # Adding all the bathrooms
