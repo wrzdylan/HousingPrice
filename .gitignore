@@ -1,4 +1,4 @@
 .idea/
 .ipynb_checkpoints
-./dataset/cleaned_train.feather
+dataset/cleaned_train.feather
 __pycache__
