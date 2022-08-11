@@ -38,10 +38,10 @@ Approche linéaire :
 - Missing values
   - [X] Remplace NA par None        
   - [X] Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire
-  - [] Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0         
-  - [] 'MSZoning' by 'RL', Functional by Typ          
-  - [] Peut drop 'Utilities' car uniquement la même valeur           
-  - [] Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec `all_data['Electrical'] = all_data['Electrical'].fillna(all_data['Electrical'].mode()[0])`          
+  - [X] Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0         
+  - [X] Functional by Typ          
+  - [X] Peut drop 'Utilities' car uniquement la même valeur           
+  - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec `all_data['Electrical'] = all_data['Electrical'].fillna(all_data['Electrical'].mode()[0])`          
 - Transform variables types
   - Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
   - LabelEncoder some categorical variables :
@@ -87,3 +87,4 @@ print(df.shape)
   - transform() ne peut pas produire des résultats aggrégés (ex: `df.transform(lambda x:x.sum())`)
   - transform() ne peut pas travailler avec +sieurs Series en même temps (ex: `df.transform(subtract_two, axis=1)` où subtract_two fait une vectorization entre 2 colonnes)
   - Avec un **groupby()**, transform() renvoie une série avec la même longueur, c'est son **principale avantage**.
+-  La fonction pandas `.mode()` retourne la valeur la plus commune de chaque colonnes

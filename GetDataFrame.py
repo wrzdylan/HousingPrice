@@ -22,8 +22,13 @@ class GetDataFrame:
         self.house_price = {}
 
     def get_cleaned_df(self):
+        # --- Imputing missing values ---
+
         # Unnecessary for  the prediction process
         self.df.drop("Id", axis=1, inplace=True)
+
+        # All records are "AllPub"
+        self.df.drop("Utilities", axis=1, inplace=True)
 
         # Add some columns to fill with None values
         na_columns = [
@@ -44,7 +49,7 @@ class GetDataFrame:
             "MasVnrType",
             "MSSubClass"
         ]
-        # Example: data description for PoolQC says NA mean no pool
+        # Example: data description for PoolQC says NA means no pool
         self.df[na_columns] = self.df[na_columns].fillna("None")
 
         # transform instead of apply and group by with one index
@@ -65,15 +70,31 @@ class GetDataFrame:
             "BsmtFullBath",
             "BsmtHalfBath"
         ]
-        # Example: NA value for Bsmt mean no Bsmt, same for GarageYrBlt because no garage
-        self.df[na_numerical_columns] = self.df[na_numerical_columns].fillna("None")
+        # Example: NA value for Bsmt means no Bsmt, same for GarageYrBlt because no garage
+        self.df[na_numerical_columns] = self.df[na_numerical_columns].fillna(0)
 
-        # ---> I'm HERE <---
+        # date description says default value is Typical
+        self.df["Functional"] = self.df["Functional"].fillna("Typ")
 
-        self.df.MasVnrType.fillna("Not present", inplace=True)
+        # Columns to fill with the most common value
+        na_cols_add_most_common = [
+            "MSZoning",
+            "Electrical",
+            "SaleType",
+            "KitchenQual",
+            "Exterior1st",
+            "Exterior2nd"
+        ]
+        # Categorical variables with few NA, fill with the most frequent value
+        self.df[na_cols_add_most_common] = self.df[na_cols_add_most_common].fillna(
+                self.df.mode().iloc[0]
+        )
+
+        # --- Add features ---
 
         # Adding square feet of first floor and second floor
         self.df["TotalFlrSFAbvGrd"] = self.df[["1stFlrSF", "2ndFlrSF"]].sum(axis=1)
+
         # Adding all the bathrooms
         self.df["TotalBath"] = self.df[
             ["BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath"]
@@ -487,9 +508,3 @@ class GetDataFrame:
                     ] = round(replace_with, 1)
                 v = v - 1
                 self.feature_outlier_count[k] = v
-
-
-df = GetDataFrame("train")
-cleaned_df = df.get_cleaned_df()
-print(cleaned_df.head())
-print(cleaned_df.info())
