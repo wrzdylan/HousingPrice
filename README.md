@@ -87,7 +87,6 @@ print(df.shape)
 - [] Ajouter quelques features liées aux date, par exemple, différence entre date de construction, date d'agrandissement et maintenant
 
 
-
 ## Lexique
 - dummy variables, valeurs numériques qui représentent des données de catégories
 - [diff between apply and transform](https://towardsdatascience.com/difference-between-apply-and-transform-in-pandas-242e5cf32705)
@@ -98,3 +97,5 @@ print(df.shape)
 - La fonction pandas `.mode()` retourne la valeur la plus commune de chaque colonnes
 - A nominal variable is the same as categorical, has two or more variables but there is no instrinsic ordering to the categories (ex: binary questions)
 - An ordinal variable has a clear ordering of the categories (ex: wages)
+- `.factorize()` transforme des valeurs nominales en numériques mais continues, un model va alors donner plus ou moins d'importance en fonction de sa grandeur
+Pour cette raison, on utilise plutôt le `One-Hot Encoding`, celui-ci va créer plusieurs features et les remplir avec des 0 et des 1, il y a néanmoins une forte augmentation des dimensions
