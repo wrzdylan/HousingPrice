@@ -34,14 +34,15 @@ Approche linéaire :
 
 
 ## Clean
-- Ajoute log SalePrice in cleaned data
-- Missing values
+- [] Ajoute log SalePrice in cleaned data
+- [X] Missing values
   - [X] Remplace NA par None        
   - [X] Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire
   - [X] Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0         
   - [X] Functional by Typ          
   - [X] Peut drop 'Utilities' car uniquement la même valeur           
-  - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec `all_data['Electrical'] = all_data['Electrical'].fillna(all_data['Electrical'].mode()[0])`          
+  - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec .mode()          
+- Drop colonnes avec valeurs trop fréquentes ? Voir get_columns_to_drop()
 - Transform variables types
   - Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
   - LabelEncoder some categorical variables :
@@ -61,7 +62,7 @@ Approche linéaire :
       # shape        
       print('Shape all_data: {}'.format(all_data.shape))
       ```
-- Ajoute feature `all_data['TotalSF'] = all_data['TotalBsmtSF'] + all_data['1stFlrSF'] + all_data['2ndFlrSF']` car influe beaucoup sur le prix
+- [X] Ajoute feature 'totalSF' car influe beaucoup sur le prix
 - Regarde le skew de chaque feature numeric et la rend plus normale :
 ```python
 numeric_feats = df.dtypes[df.dtypes != "object"].index

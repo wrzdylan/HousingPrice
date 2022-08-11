@@ -5,6 +5,7 @@ import pandas as pd
 import numpy as np
 import datetime
 import warnings
+from typing import List
 
 warnings.filterwarnings("ignore")
 
@@ -92,18 +93,24 @@ class GetDataFrame:
 
         # --- Add features ---
 
-        # Adding square feet of first floor and second floor
-        self.df["TotalFlrSFAbvGrd"] = self.df[["1stFlrSF", "2ndFlrSF"]].sum(axis=1)
+        # Total surface feature, very important to determine house prices
+        self.df["TotalSF"] = self.df["TotalBsmtSF"] + self.df["1stFlrSF"] + self.df["2ndFlrSF"]
 
         # Adding all the bathrooms
         self.df["TotalBath"] = self.df[
             ["BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath"]
         ].sum(axis=1)
+
         # Adding square feet of all Porch
         self.df["TotalPorchSF"] = self.df[
             ["OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "WoodDeckSF"]
         ].sum(axis=1)
-        self.df.drop(columns=self.get_columns_to_drop(), inplace=True)
+
+        # Lose too much information
+        # self.df.drop(columns=self.get_columns_to_drop(), inplace=True)
+
+        # ---> I'm HERE <---
+
         # create a list of numerical features
         self.numerical_features = list(
             self.df.select_dtypes(include=[np.number]).columns.values
@@ -422,25 +429,17 @@ class GetDataFrame:
         )
         return 100 * missing_info / self.df.shape[0]
 
-    def get_columns_to_drop(self):
-        # get the features that hold more than 90% of its data with a same value
-        unique_df = (
-            self.df.apply(lambda x: self.top_unique_count(x))
-            .rename(index={0: "Value", 1: "Percentage", 2: "Count"})
-            .T.sort_values(by="Count", ascending=False)
-        )
-        drop_columns = unique_df.query("Percentage > 90.0").index.values
-        return drop_columns
+    def get_columns_to_drop(self) -> List[str]:
+        """Get the features that hold more than 90% of its data with a same value
 
-    def top_unique_count(self, x):
-        unq_cnt = (
-            x.value_counts(ascending=False, dropna=False).head(1).index.values[0],
-            100
-            * x.value_counts(ascending=False, dropna=False).head(1).values[0]
-            / self.df.shape[0],
-            x.value_counts(ascending=False, dropna=False).head(1).values[0],
-        )
-        return unq_cnt
+        :return: List of columns name
+        """
+        drop_cols = [
+            v
+            for i, v in enumerate(self.df.columns)
+            if ((self.df[v].value_counts().max() / len(self.df)) * 100) > 90
+        ]
+        return drop_cols
 
     def feature_outlier_make_count(self, to_print=False):
         self.feature_outlier_count = {
@@ -456,7 +455,7 @@ class GetDataFrame:
             "OpenPorchSF": 3,
             "TotalBsmtSF": 4,
             "TotRmsAbvGrd": 1,
-            "TotalFlrSFAbvGrd": 2,
+            "TotalSF": 2,
             "TotalPorchSF": 1,
             "WoodDeckSF": 3,
         }
