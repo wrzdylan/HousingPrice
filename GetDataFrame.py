@@ -15,253 +15,122 @@ class GetDataFrame:
         self.categorical_columns = None
         self.cat_feature = None
         self.tm = None
-        self.df = pd.read_csv(f"dataset/{df_name}.csv")
-        self.numerical_features = list()
-        self.categorical_features = list()
-        self.timeseries_features = list()
+        self.df: pd.DataFrame = pd.read_csv(f"dataset/{df_name}.csv")
+        self.numerical_features: List[str] = list()
+        self.categorical_features: List[str] = list()
         self.feature_outlier_count = {}
         self.house_price = {}
 
     def get_cleaned_df(self):
-        # --- Imputing missing values ---
-
         # Unnecessary for  the prediction process
         self.df.drop("Id", axis=1, inplace=True)
-
         # All records are "AllPub"
         self.df.drop("Utilities", axis=1, inplace=True)
 
-        # Add some columns to fill with None values
-        na_columns = [
-            "PoolQC",
-            "MiscFeature",
-            "Alley",
-            "Fence",
-            "FireplaceQu",
-            "GarageType",
-            "GarageFinish",
-            "GarageQual",
-            "GarageCond",
-            "BsmtQual",
-            "BsmtCond",
-            "BsmtExposure",
-            "BsmtFinType1",
-            "BsmtFinType2",
-            "MasVnrType",
-            "MSSubClass"
-        ]
-        # Example: data description for PoolQC says NA means no pool
-        self.df[na_columns] = self.df[na_columns].fillna("None")
-
-        # transform instead of apply and group by with one index
-        self.df["LotFrontage"] = self.df.groupby(["Neighborhood"])["LotFrontage"].transform(
-            lambda x: x.fillna(x.median())
-        )
-
-        # Columns to fill with 0 values
-        na_numerical_columns = [
-            "MasVnrArea",
-            "GarageYrBlt",
-            "GarageArea",
-            "GarageCars",
-            "BsmtFinSF1",
-            "BsmtFinSF2",
-            "BsmtUnfSF",
-            "TotalBsmtSF",
-            "BsmtFullBath",
-            "BsmtHalfBath"
-        ]
-        # Example: NA value for Bsmt means no Bsmt, same for GarageYrBlt because no garage
-        self.df[na_numerical_columns] = self.df[na_numerical_columns].fillna(0)
-
-        # date description says default value is Typical
-        self.df["Functional"] = self.df["Functional"].fillna("Typ")
-
-        # Columns to fill with the most common value
-        na_cols_add_most_common = [
-            "MSZoning",
-            "Electrical",
-            "SaleType",
-            "KitchenQual",
-            "Exterior1st",
-            "Exterior2nd"
-        ]
-        # Categorical variables with few NA, fill with the most frequent value
-        self.df[na_cols_add_most_common] = self.df[na_cols_add_most_common].fillna(
-                self.df.mode().iloc[0]
-        )
-
-        # --- Add features ---
-
-        # Total surface feature, very important to determine house prices
-        self.df["TotalSF"] = self.df["TotalBsmtSF"] + self.df["1stFlrSF"] + self.df["2ndFlrSF"]
-
-        # Adding all the bathrooms
-        self.df["TotalBath"] = self.df[
-            ["BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath"]
-        ].sum(axis=1)
-
-        # Adding square feet of all Porch
-        self.df["TotalPorchSF"] = self.df[
-            ["OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "WoodDeckSF"]
-        ].sum(axis=1)
-
-        # Lose too much information
-        # self.df.drop(columns=self.get_columns_to_drop(), inplace=True)
-
-        # ---> I'm HERE <---
+        # SalePrice is skewed then we use log because the min value is above 30k, no need of log1p
+        self.df["SalePrice"] = np.log(self.df["SalePrice"])
 
         # create a list of numerical features
-        self.numerical_features = list(
-            self.df.select_dtypes(include=[np.number]).columns.values
-        )
+        self.numerical_features = self.df.select_dtypes(include=[np.number]).columns.values.tolist()
         # create a list of features that are categorical
-        self.categorical_features = list(
-            self.df.select_dtypes(include=[np.object]).columns.values
-        )
-        # Create feature list for time series data
-        self.timeseries_features = [
-            "YearBuilt",
-            "YearRemodAdd",
-            "YrSold",
-            "MoSold",
-            "GarageYrBlt",
-        ]
-        # removing times series features from numeric to avoid repetition
-        for col in self.timeseries_features:
-            self.numerical_features.remove(col)
+        self.categorical_features = self.df.select_dtypes(include=[np.object]).columns.values.tolist()
 
-        ###### Numerical #######
-        # adding numerical features to categorical if the unique value count in a feature is less tha are equal to 10
-        self.cat_feature = (
-            pd.Series(
-                self.df[self.numerical_features].nunique().sort_values(), name="Count"
-            )
-            .to_frame()
-            .query("Count <= 10")
-            .index.values
-        )
-        self.categorical_features.extend(self.cat_feature)
-        # removing the numerical features that belong to time series
-        for col in self.cat_feature:
-            self.numerical_features.remove(col)
+        # --- Fill NA values ---
+        self.__imputing_missing_values()
 
-        # Handle outliers
+        # --- Add features ---
+        self.__add_features()
+
+        # --- Transform variables types ---
         self.fix_outliers()
 
-        # drop the variables that are not in correlation with sale price
-        self.df.drop(["BsmtFinSF2", "BsmtUnfSF", "EnclosedPorch"], axis=1, inplace=True)
-        for col in ["BsmtFinSF2", "BsmtUnfSF", "EnclosedPorch"]:
-            self.numerical_features.remove(col)
-
-        ######### Categorical ##########
-
-        # change the type to string
+        # Change some numerical variables to string, the values are the same we will use LabelEncoder after
         self.df.MSSubClass = self.df.MSSubClass.astype(str)
+        self.df.OverallCond = self.df.OverallCond.astype(str)
 
-        # reducing the number of categories
-        self.df.MSSubClass.replace(
-            {
-                "20": "1story",
-                "30": "1story",
-                "40": "1story",
-                "45": "1story",
-                "50": "1story",
-                "60": "2story",
-                "70": "2story",
-                "75": "2story",
-                "80": "nstory",
-                "85": "nstory",
-                "90": "nstory",
-                "120": "1story",
-                "150": "1story",
-                "160": "2story",
-                "180": "nstory",
-                "190": "nstory",
-            },
-            inplace=True,
-        )
+        # --- Reduce the quantity of categorical values, is USEFUL ? For example, a near and adjacent are the same ---
+        # A voir avec le RMSE si on gagne en performance
         # adding MSSubClass to categorical Feature list
-        self.categorical_features.append("MSSubClass")
+        # self.categorical_features.append("MSSubClass")
         # removing it from numerical feature list
-        self.numerical_features.remove("MSSubClass")
+        # self.numerical_features.remove("MSSubClass")
         # Combine Categories that are not ordinal as ordinal categories (need refactorization)
-        self.df.BldgType.replace({"2fmCon": "Twnhs", "Duplex": "Twnhs"}, inplace=True)
-        self.df.BsmtExposure.replace({"Mn": "Av"}, inplace=True)
-        self.df.Condition1.replace(
-            {"RRNn": "RRAn", "PosN": "PosA", "RRNe": "RRAe", "Feedr": "Artery"},
-            inplace=True,
-        )
-        self.df.Exterior2nd.replace(
-            {
-                "MetalSd": "Wd Sdng",
-                "Wd Shng": "Wd Sdng",
-                "HbBoard": "Wd Sdng",
-                "Plywood": "Wd Sdng",
-                "Stucco": "Wd Sdng",
-                "CBlock": "BrkFace",
-                "Other": "BrkFace",
-                "Stone": "BrkFace",
-                "AsphShn": "BrkFace",
-                "ImStucc": "BrkFace",
-                "Brk Cmn": "BrkFace",
-            },
-            inplace=True,
-        )
-        self.df.Foundation.replace({"Wood": "Stone", "Slab": "Stone"}, inplace=True)
-        self.df.GarageType.replace(
-            {
-                "CarPort": "Detchd",
-                "No Garage": "Detchd",
-                "Basment": "Detchd",
-                "2Types": "Detchd",
-            },
-            inplace=True,
-        )
-        self.df.LotShape.replace({"IR3": "IR2"}, inplace=True)
-        self.df.MSZoning.replace({"RH": "RM"}, inplace=True)
-        self.df.MasVnrType.replace(
-            {"None": "BrkCmn", "Not present": "BrkCmn"}, inplace=True
-        )
-        self.df.Neighborhood.replace(
-            {
-                "BrDale": "MeadowV",
-                "IDOTRR": "MeadowV",
-                "NAmes": "Sawyer",
-                "NPkVill": "Sawyer",
-                "Mitchel": "Sawyer",
-                "SWISU": "Sawyer",
-                "Blueste": "Sawyer",
-                "Blmngtn": "Gilbert",
-                "SawyerW": "Gilbert",
-                "NWAmes": "Gilbert",
-                "ClearCr": "Crawfor",
-                "CollgCr": "Crawfor",
-                "Timber": "Veenker",
-                "Somerst": "Veenker",
-                "Edwards": "OldTown",
-                "BrkSide": "OldTown",
-                "StoneBr": "NridgHt",
-                "NoRidge": "NridgHt",
-            },
-            inplace=True,
-        )
-
-        self.df.SaleCondition.replace(
-            {"AdjLand": "Abnorml", "Alloca": "Abnorml", "Family": "Abnorml"},
-            inplace=True,
-        )
-        self.df.SaleType.replace(
-            {
-                "ConLD": "COD",
-                "ConLI": "COD",
-                "CwD": "COD",
-                "ConLw": "COD",
-                "Con": "COD",
-                "Oth": "COD",
-            },
-            inplace=True,
-        )
+        # self.df.BldgType.replace({"2fmCon": "Twnhs", "Duplex": "Twnhs"}, inplace=True)
+        # self.df.BsmtExposure.replace({"Mn": "Av"}, inplace=True)
+        # self.df.Condition1.replace(
+        #     {"RRNn": "RRAn", "PosN": "PosA", "RRNe": "RRAe", "Feedr": "Artery"},
+        #     inplace=True,
+        # )
+        # self.df.Exterior2nd.replace(
+        #     {
+        #         "MetalSd": "Wd Sdng",
+        #         "Wd Shng": "Wd Sdng",
+        #         "HbBoard": "Wd Sdng",
+        #         "Plywood": "Wd Sdng",
+        #         "Stucco": "Wd Sdng",
+        #         "CBlock": "BrkFace",
+        #         "Other": "BrkFace",
+        #         "Stone": "BrkFace",
+        #         "AsphShn": "BrkFace",
+        #         "ImStucc": "BrkFace",
+        #         "Brk Cmn": "BrkFace",
+        #     },
+        #     inplace=True,
+        # )
+        # self.df.Foundation.replace({"Wood": "Stone", "Slab": "Stone"}, inplace=True)
+        # self.df.GarageType.replace(
+        #     {
+        #         "CarPort": "Detchd",
+        #         "No Garage": "Detchd",
+        #         "Basment": "Detchd",
+        #         "2Types": "Detchd",
+        #     },
+        #     inplace=True,
+        # )
+        # self.df.LotShape.replace({"IR3": "IR2"}, inplace=True)
+        # self.df.MSZoning.replace({"RH": "RM"}, inplace=True)
+        # self.df.MasVnrType.replace(
+        #     {"None": "BrkCmn", "Not present": "BrkCmn"}, inplace=True
+        # )
+        # self.df.Neighborhood.replace(
+        #     {
+        #         "BrDale": "MeadowV",
+        #         "IDOTRR": "MeadowV",
+        #         "NAmes": "Sawyer",
+        #         "NPkVill": "Sawyer",
+        #         "Mitchel": "Sawyer",
+        #         "SWISU": "Sawyer",
+        #         "Blueste": "Sawyer",
+        #         "Blmngtn": "Gilbert",
+        #         "SawyerW": "Gilbert",
+        #         "NWAmes": "Gilbert",
+        #         "ClearCr": "Crawfor",
+        #         "CollgCr": "Crawfor",
+        #         "Timber": "Veenker",
+        #         "Somerst": "Veenker",
+        #         "Edwards": "OldTown",
+        #         "BrkSide": "OldTown",
+        #         "StoneBr": "NridgHt",
+        #         "NoRidge": "NridgHt",
+        #     },
+        #     inplace=True,
+        # )
+        #
+        # self.df.SaleCondition.replace(
+        #     {"AdjLand": "Abnorml", "Alloca": "Abnorml", "Family": "Abnorml"},
+        #     inplace=True,
+        # )
+        # self.df.SaleType.replace(
+        #     {
+        #         "ConLD": "COD",
+        #         "ConLI": "COD",
+        #         "CwD": "COD",
+        #         "ConLw": "COD",
+        #         "Con": "COD",
+        #         "Oth": "COD",
+        #     },
+        #     inplace=True,
+        # )
         categorical_to_drop = [
             "ExterCond",
             "Fence",
@@ -416,18 +285,61 @@ class GetDataFrame:
     def get_raw_df(self):
         return self.df
 
-    def check_null_percentage(self):
-        missing_info = (
-            pd.DataFrame(
-                np.array(
-                    self.df.isnull().sum().sort_values(ascending=False).reset_index()
-                ),
-                columns=["Columns", "Missing_Percentage"],
-            )
-            .query("Missing_Percentage > 0")
-            .set_index("Columns")
+    def __imputing_missing_values(self) -> None:
+        """ Fill NA values
+        Use description, mode, transform, None and 0 to fill missing data
+
+        :return:
+        """
+        # transform instead of apply and group by with one index
+        self.df["LotFrontage"] = self.df.groupby(["Neighborhood"])["LotFrontage"].transform(
+            lambda x: x.fillna(x.median())
         )
-        return 100 * missing_info / self.df.shape[0]
+
+        # date description says default value is Typical
+        self.df["Functional"] = self.df["Functional"].fillna("Typ")
+
+        # Columns to fill with the most common value
+        na_cols_add_most_common = [
+            "MSZoning",
+            "Electrical",
+            "SaleType",
+            "KitchenQual",
+            "Exterior1st",
+            "Exterior2nd"
+        ]
+        # Categorical variables with few NA, fill with the most frequent value
+        self.df[na_cols_add_most_common] = self.df[na_cols_add_most_common].fillna(
+                self.df.mode().iloc[0]
+        )
+
+        # Example: NA value for Bsmt means no Bsmt, same for GarageYrBlt because no garage
+        self.df[self.numerical_features] = self.df[self.numerical_features].fillna(0)
+
+        # Example: data description for PoolQC says NA means no pool
+        self.df[self.categorical_features] = self.df[self.categorical_features].fillna("None")
+
+    def __add_features(self) -> None:
+        """Help our models by creating new features
+
+        :return:
+        """
+        # Total surface feature, very important to determine house prices  + add vectorization
+        self.df["TotalSF"] = self.df["TotalBsmtSF"] + self.df["1stFlrSF"] + self.df["2ndFlrSF"]
+
+        self.df["LivLotRatio"] = self.df.GrLivArea / self.df.LotArea
+
+        self.df["Spaciousness"] = (self.df.FirstFlrSF + self.df.SecondFlrSF) / self.df.TotRmsAbvGrd
+
+        # Adding all the bathrooms
+        self.df["TotalBath"] = self.df[
+            ["BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath"]
+        ].sum(axis=1)
+
+        # Adding square feet of all Porch
+        self.df["TotalPorchSF"] = self.df[
+            ["OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "WoodDeckSF"]
+        ].sum(axis=1)
 
     def get_columns_to_drop(self) -> List[str]:
         """Get the features that hold more than 90% of its data with a same value
@@ -442,6 +354,7 @@ class GetDataFrame:
         return drop_cols
 
     def feature_outlier_make_count(self, to_print=False):
+        # Can use z-score or interquartile range
         self.feature_outlier_count = {
             "1stFlrSF": 1,
             "BsmtFinSF1": 2,
@@ -475,18 +388,13 @@ class GetDataFrame:
         ].sort_values(by=feature, ascending=False)
         return outlier
 
-    def remove_outlier_features_count_for_index(self, outlier_index):
-        for col in self.feature_outlier_count.keys():
-            if (self.feature_outlier_count[col] > 0) & (
-                outlier_index in self.get_outliers(col).index.values
-            ):
-                self.feature_outlier_count[col] = self.feature_outlier_count[col] - 1
-        self.df.drop(outlier_index, inplace=True)
-        self.df.reset_index(drop=True, inplace=True)
-        return "ok"
+    def fix_outliers(self) -> None:
+        """ Replace outliers by mean from 4 closest values
 
-    def fix_outliers(self):
+        :return:
+        """
         self.feature_outlier_make_count()
+
         for k, v in self.feature_outlier_count.items():
             while v > 0:
                 # replacing the outliers by taking mean of four closest feature value of the outlier
@@ -495,8 +403,9 @@ class GetDataFrame:
                     (self.df["SalePrice"] - self.get_outliers(k)["SalePrice"].values[0])
                     .abs()
                     .argsort()[v: v + 4],
-                    k,
+                    k
                 ].mean()
+
                 if (self.df[k].dtypes == np.int64) | (self.df[k].dtypes == np.int32):
                     self.df.loc[
                         self.df.index[self.get_outliers(k).index.values[0]], k
@@ -505,5 +414,6 @@ class GetDataFrame:
                     self.df.loc[
                         self.df.index[self.get_outliers(k).index.values[0]], k
                     ] = round(replace_with, 1)
-                v = v - 1
+
+                v -= 1
                 self.feature_outlier_count[k] = v

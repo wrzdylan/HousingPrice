@@ -15,6 +15,8 @@ Pour cela elle a fait travailler un datascientist qui a préparé le set qui con
 
 ## Methodologie
 > [Lien Kaggle](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data?select=data_description.txt)
+- [Explication des algos](https://www.kaggle.com/code/faressayah/practical-introduction-to-10-regression-algorithm)
+
 
 ### Sélection des features
 - [EDA](https://www.kaggle.com/code/pmarcelino/comprehensive-data-exploration-with-python)
@@ -31,10 +33,14 @@ Faire attention aux outliers et les gérer car donne des informations mais peut 
 ### Prediction
 Approche linéaire :
 - https://www.kaggle.com/code/apapiu/regularized-linear-models
+XGBoost :
+- https://www.kaggle.com/code/ryanholbrook/feature-engineering-for-house-prices
+Neural network:
+- https://www.kaggle.com/code/zoupet/neural-network-model-for-house-prices-tensorflow
 
 
 ## Clean
-- [] Ajoute log SalePrice in cleaned data
+- [X] Ajoute log SalePrice in cleaned data
 - [X] Missing values
   - [X] Remplace NA par None        
   - [X] Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire
@@ -42,7 +48,6 @@ Approche linéaire :
   - [X] Functional by Typ          
   - [X] Peut drop 'Utilities' car uniquement la même valeur           
   - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec .mode()          
-- Drop colonnes avec valeurs trop fréquentes ? Voir get_columns_to_drop()
 - Transform variables types
   - Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
   - LabelEncoder some categorical variables :
@@ -63,7 +68,7 @@ Approche linéaire :
       print('Shape all_data: {}'.format(all_data.shape))
       ```
 - [X] Ajoute feature 'totalSF' car influe beaucoup sur le prix
-- Regarde le skew de chaque feature numeric et la rend plus normale :
+- [] Regarde le skew de chaque feature numeric et la rend plus normale :
 ```python
 numeric_feats = df.dtypes[df.dtypes != "object"].index
 
@@ -74,7 +79,7 @@ skewness = pd.DataFrame({'Skew' :skewed_feats})
 skewed_features = skewness.index
 df[skewed_features] = np.log1p(df[skewed_features])
 ```
-- getting dummy categorical features, valeur numérique qui représente une catégorie
+- [] getting dummy categorical features, valeur numérique qui représente une catégorie
 ```python
 df = pd.get_dummies(df)
 print(df.shape)
@@ -88,4 +93,6 @@ print(df.shape)
   - transform() ne peut pas produire des résultats aggrégés (ex: `df.transform(lambda x:x.sum())`)
   - transform() ne peut pas travailler avec +sieurs Series en même temps (ex: `df.transform(subtract_two, axis=1)` où subtract_two fait une vectorization entre 2 colonnes)
   - Avec un **groupby()**, transform() renvoie une série avec la même longueur, c'est son **principale avantage**.
--  La fonction pandas `.mode()` retourne la valeur la plus commune de chaque colonnes
+- La fonction pandas `.mode()` retourne la valeur la plus commune de chaque colonnes
+- A nominal variable is the same as categorical, has two or more variables but there is no instrinsic ordering to the categories (ex: binary questions)
+- An ordinal variable has a clear ordering of the categories (ex: wages)
