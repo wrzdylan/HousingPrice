@@ -48,9 +48,9 @@ Neural network:
   - [X] Functional by Typ          
   - [X] Peut drop 'Utilities' car uniquement la même valeur           
   - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec .mode()          
-- Transform variables types
-  - Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
-  - LabelEncoder some categorical variables :
+- [] Transform variables types
+  - [X] Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
+  - [] LabelEncoder some categorical variables :
       ```python
       from sklearn.preprocessing import LabelEncoder
       cols = ('FireplaceQu', 'BsmtQual', 'BsmtCond', 'GarageQual', 'GarageCond', 
@@ -84,6 +84,8 @@ df[skewed_features] = np.log1p(df[skewed_features])
 df = pd.get_dummies(df)
 print(df.shape)
 ```
+- [] Ajouter quelques features liées aux date, par exemple, différence entre date de construction, date d'agrandissement et maintenant
+
 
 
 ## Lexique

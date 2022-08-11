@@ -31,9 +31,12 @@ class GetDataFrame:
         self.df["SalePrice"] = np.log(self.df["SalePrice"])
 
         # create a list of numerical features
-        self.numerical_features = self.df.select_dtypes(include=[np.number]).columns.values.tolist()
+        self.numerical_features = list(self.df.select_dtypes(include=[np.number]).columns.values)
         # create a list of features that are categorical
-        self.categorical_features = self.df.select_dtypes(include=[np.object]).columns.values.tolist()
+        self.categorical_features = list(self.df.select_dtypes(include=[np.object]).columns.values)
+
+        # --- Clean outliers ---
+        self.fix_outliers()
 
         # --- Fill NA values ---
         self.__imputing_missing_values()
@@ -42,221 +45,13 @@ class GetDataFrame:
         self.__add_features()
 
         # --- Transform variables types ---
-        self.fix_outliers()
+        self.__numeric_vars_to_categorical()
 
-        # Change some numerical variables to string, the values are the same we will use LabelEncoder after
-        self.df.MSSubClass = self.df.MSSubClass.astype(str)
-        self.df.OverallCond = self.df.OverallCond.astype(str)
-
-        # --- Reduce the quantity of categorical values, is USEFUL ? For example, a near and adjacent are the same ---
-        # A voir avec le RMSE si on gagne en performance
-        # adding MSSubClass to categorical Feature list
-        # self.categorical_features.append("MSSubClass")
-        # removing it from numerical feature list
-        # self.numerical_features.remove("MSSubClass")
-        # Combine Categories that are not ordinal as ordinal categories (need refactorization)
-        # self.df.BldgType.replace({"2fmCon": "Twnhs", "Duplex": "Twnhs"}, inplace=True)
-        # self.df.BsmtExposure.replace({"Mn": "Av"}, inplace=True)
-        # self.df.Condition1.replace(
-        #     {"RRNn": "RRAn", "PosN": "PosA", "RRNe": "RRAe", "Feedr": "Artery"},
-        #     inplace=True,
-        # )
-        # self.df.Exterior2nd.replace(
-        #     {
-        #         "MetalSd": "Wd Sdng",
-        #         "Wd Shng": "Wd Sdng",
-        #         "HbBoard": "Wd Sdng",
-        #         "Plywood": "Wd Sdng",
-        #         "Stucco": "Wd Sdng",
-        #         "CBlock": "BrkFace",
-        #         "Other": "BrkFace",
-        #         "Stone": "BrkFace",
-        #         "AsphShn": "BrkFace",
-        #         "ImStucc": "BrkFace",
-        #         "Brk Cmn": "BrkFace",
-        #     },
-        #     inplace=True,
-        # )
-        # self.df.Foundation.replace({"Wood": "Stone", "Slab": "Stone"}, inplace=True)
-        # self.df.GarageType.replace(
-        #     {
-        #         "CarPort": "Detchd",
-        #         "No Garage": "Detchd",
-        #         "Basment": "Detchd",
-        #         "2Types": "Detchd",
-        #     },
-        #     inplace=True,
-        # )
-        # self.df.LotShape.replace({"IR3": "IR2"}, inplace=True)
-        # self.df.MSZoning.replace({"RH": "RM"}, inplace=True)
-        # self.df.MasVnrType.replace(
-        #     {"None": "BrkCmn", "Not present": "BrkCmn"}, inplace=True
-        # )
-        # self.df.Neighborhood.replace(
-        #     {
-        #         "BrDale": "MeadowV",
-        #         "IDOTRR": "MeadowV",
-        #         "NAmes": "Sawyer",
-        #         "NPkVill": "Sawyer",
-        #         "Mitchel": "Sawyer",
-        #         "SWISU": "Sawyer",
-        #         "Blueste": "Sawyer",
-        #         "Blmngtn": "Gilbert",
-        #         "SawyerW": "Gilbert",
-        #         "NWAmes": "Gilbert",
-        #         "ClearCr": "Crawfor",
-        #         "CollgCr": "Crawfor",
-        #         "Timber": "Veenker",
-        #         "Somerst": "Veenker",
-        #         "Edwards": "OldTown",
-        #         "BrkSide": "OldTown",
-        #         "StoneBr": "NridgHt",
-        #         "NoRidge": "NridgHt",
-        #     },
-        #     inplace=True,
-        # )
-        #
-        # self.df.SaleCondition.replace(
-        #     {"AdjLand": "Abnorml", "Alloca": "Abnorml", "Family": "Abnorml"},
-        #     inplace=True,
-        # )
-        # self.df.SaleType.replace(
-        #     {
-        #         "ConLD": "COD",
-        #         "ConLI": "COD",
-        #         "CwD": "COD",
-        #         "ConLw": "COD",
-        #         "Con": "COD",
-        #         "Oth": "COD",
-        #     },
-        #     inplace=True,
-        # )
-        categorical_to_drop = [
-            "ExterCond",
-            "Fence",
-            "LotConfig",
-            "RoofStyle",
-            "Exterior1st",
-        ]
-        # add columns to drop
-        drop_columns = ["ExterCond", "Fence", "LotConfig", "RoofStyle", "Exterior1st"]
-
-        # drop the selected features
-        self.df.drop(columns=drop_columns, inplace=True)
-
-        # remove the dropped columns from categorical feature list
-        for cat in drop_columns[:]:
-            self.categorical_features.remove(cat)
-
-        ######### Timeseries ########
-        # change the types to integer
-        self.df.YrSold = self.df.YrSold.astype(int)
-        self.df.GarageYrBlt = self.df.GarageYrBlt.astype(int)
-
-        # create a derived column date sold by combining month sold and year sold
-        self.df["dateSold"] = (
-            self.df["MoSold"].astype(str) + "-1-" + self.df["YrSold"].astype(str)
-        )
-        self.df["dateSold"] = pd.to_datetime(self.df["dateSold"])
-        # add the new column to the timeseries list
-        self.timeseries_features.append("dateSold")
-
-        # drop columns Mosold / Yrsold
-        self.df.drop(["MoSold", "YrSold"], axis=1, inplace=True)
-        for col in ["MoSold", "YrSold"]:
-            self.timeseries_features.remove(col)
-
-        # reset these categorical numerical variables to integer
-        self.df[
-            [
-                "HalfBath",
-                "Fireplaces",
-                "FullBath",
-                "BsmtFullBath",
-                "GarageCars",
-                "BedroomAbvGr",
-                "OverallCond",
-                "OverallQual",
-            ]
-        ] = self.df[
-            [
-                "HalfBath",
-                "Fireplaces",
-                "FullBath",
-                "BsmtFullBath",
-                "GarageCars",
-                "BedroomAbvGr",
-                "OverallCond",
-                "OverallQual",
-            ]
-        ].astype(
-            int
-        )
-
-        # assign the categorical columns that are non integer to categorical_columns as a list
-        self.categorical_columns = [
-            "ExterQual",
-            "BsmtQual",
-            "BsmtCond",
-            "HeatingQC",
-            "KitchenQual",
-            "FireplaceQu",
-            "GarageQual",
-            "HouseStyle",
-            "BsmtFinType2",
-            "BsmtFinType1",
-            "GarageFinish",
-        ]
-
-        # assign the labels in the order of decreasing to increase as when creating a categorical feature
-        # Converting normal Object features to Categorical Data Type features
-        self.df["ExterQual"] = pd.Categorical(
-            self.df["ExterQual"], ordered=True, categories=["Fa", "TA", "Gd", "Ex"]
-        )
-        self.df["BsmtQual"] = pd.Categorical(
-            self.df["BsmtQual"], ordered=True, categories=["NA", "Fa", "TA", "Gd", "Ex"]
-        )
-        self.df["BsmtCond"] = pd.Categorical(
-            self.df["BsmtCond"], ordered=True, categories=["NA", "Po", "Fa", "TA", "Gd"]
-        )
-        self.df["HeatingQC"] = pd.Categorical(
-            self.df["HeatingQC"], ordered=True, categories=["Po", "Fa", "TA", "Gd", "Ex"]
-        )
-        self.df["KitchenQual"] = pd.Categorical(
-            self.df["KitchenQual"], ordered=True, categories=["Fa", "TA", "Gd", "Ex"]
-        )
-        self.df["FireplaceQu"] = pd.Categorical(
-            self.df["FireplaceQu"],
-            ordered=True,
-            categories=["NA", "Po", "Fa", "TA", "Gd", "Ex"],
-        )
-        self.df["GarageQual"] = pd.Categorical(
-            self.df["GarageQual"],
-            ordered=True,
-            categories=["NA", "Po", "Fa", "TA", "Gd", "Ex"],
-        )
-        self.df['GarageFinish'] = pd.Categorical(
-            self.df['GarageFinish'], ordered=True, categories=['NA', 'Unf', 'RFn', 'Fin']
-        )
-        self.df['BsmtFinType1'] = pd.Categorical(
-            self.df['BsmtFinType1'], ordered=True, categories=['NA', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ']
-        )
-        self.df['BsmtFinType2'] = pd.Categorical(
-            self.df['BsmtFinType2'], ordered=True, categories=['NA', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ']
-        )
-        self.df['HouseStyle'] = pd.Categorical(
-            self.df['HouseStyle'],
-            ordered=True,
-            categories=['SFoyer', '1.5Unf', '1Story', '1.5Fin', 'SLvl', '2.5Unf', '2Story', '2.5Fin']
-        )
-
-        # factorize the categories to Integer representation
-        for col in self.categorical_columns:
-            code, _ = pd.factorize(self.df[col],sort=True)
-            self.df[col] = pd.Series(code)
-
-        # reassign the categorical features
-        self.categorical_features = list(self.df.select_dtypes(include=[np.object]).columns.values)
+        # ---> I'm HERE <---
+        # --- Ordinal variables ---
+        # https://machinelearningmastery.com/one-hot-encoding-for-categorical-data/
+        # transforme les catégories en valeurs numérique -> One-Hot Encoding + dummy
+        # Voir diff LabelEncoder et One-Hot encoding
 
         # created dummy variables for categorical features
         self.house_price = pd.concat(
@@ -268,7 +63,8 @@ class GetDataFrame:
         # reset index for the new dataframe
         self.house_price.reset_index(drop=True, inplace=True)
 
-        ######## TIME ########
+        # ---   TIME ---
+        # A voir ce que c'est
         # lets create a constant time
         self.tm = datetime.time(10, 10)
 
@@ -280,9 +76,8 @@ class GetDataFrame:
         # reassigning all the numerical features to the numerical_features variable as a list
         self.numerical_features = list(self.df.select_dtypes(include=[np.number]).columns.values)
         print(self.house_price.shape)
-        return self.df
 
-    def get_raw_df(self):
+    def get_df(self):
         return self.df
 
     def __imputing_missing_values(self) -> None:
@@ -325,11 +120,12 @@ class GetDataFrame:
         :return:
         """
         # Total surface feature, very important to determine house prices  + add vectorization
-        self.df["TotalSF"] = self.df["TotalBsmtSF"] + self.df["1stFlrSF"] + self.df["2ndFlrSF"]
+        self.df["TotalFlrSFAbvGrd"] = self.df["1stFlrSF"] + self.df["2ndFlrSF"]
+        self.df["TotalSF"] = self.df["TotalBsmtSF"] + self.df["TotalFlrSFAbvGrd"]
 
         self.df["LivLotRatio"] = self.df.GrLivArea / self.df.LotArea
 
-        self.df["Spaciousness"] = (self.df.FirstFlrSF + self.df.SecondFlrSF) / self.df.TotRmsAbvGrd
+        self.df["Spaciousness"] = self.df["TotalFlrSFAbvGrd"] / self.df.TotRmsAbvGrd
 
         # Adding all the bathrooms
         self.df["TotalBath"] = self.df[
@@ -340,6 +136,20 @@ class GetDataFrame:
         self.df["TotalPorchSF"] = self.df[
             ["OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "WoodDeckSF"]
         ].sum(axis=1)
+
+    def __numeric_vars_to_categorical(self) -> None:
+        """ Transform MSSubClass, OverallCond, YrSold, MoSold into categorical because
+        in the data description, they are linked to a nominal value.
+
+        :return:
+        """
+        cols_to_categorical = ["MSSubClass", "OverallCond", "YrSold", "MoSold"]
+        self.df[cols_to_categorical] = self.df[cols_to_categorical].astype(str)
+
+        # adding MSSubClass to categorical Feature list
+        self.categorical_features.extend(cols_to_categorical)
+        # removing it from numerical feature list
+        self.numerical_features = [i for i in self.numerical_features if i not in cols_to_categorical]
 
     def get_columns_to_drop(self) -> List[str]:
         """Get the features that hold more than 90% of its data with a same value
