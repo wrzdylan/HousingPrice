@@ -3,9 +3,9 @@
 # Import libraries
 import pandas as pd
 import numpy as np
-import datetime
 import warnings
 from typing import List
+from sklearn.preprocessing import OrdinalEncoder
 
 warnings.filterwarnings("ignore")
 
@@ -35,47 +35,49 @@ class GetDataFrame:
         # create a list of features that are categorical
         self.categorical_features = list(self.df.select_dtypes(include=[np.object]).columns.values)
 
-        # --- Clean outliers ---
-        self.fix_outliers()
-
         # --- Fill NA values ---
         self.__imputing_missing_values()
 
         # --- Add features ---
         self.__add_features()
 
+        # --- Clean outliers ---
+        self.fix_outliers()
+
         # --- Transform variables types ---
         self.__numeric_vars_to_categorical()
 
-        # ---> I'm HERE <---
         # --- Ordinal variables ---
-        # https://machinelearningmastery.com/one-hot-encoding-for-categorical-data/
-        # transforme les catégories en valeurs numérique -> One-Hot Encoding + dummy
-        # Voir diff LabelEncoder et One-Hot encoding
+        self.__ordinal_encode()
+
+        print(self.categorical_features)
+
+        # ---> I'm HERE <---
+        # self.df = pd.get_dummies(self.df)
 
         # created dummy variables for categorical features
-        self.house_price = pd.concat(
-            [self.df, pd.get_dummies(self.df[self.categorical_features], drop_first=True)], axis=1
-        )
+        # self.house_price = pd.concat(
+        #     [self.df, pd.get_dummies(self.df[self.categorical_features], drop_first=True)], axis=1
+        # )
 
         # drop the actual categorical feature from list
-        self.house_price.drop(columns=self.categorical_features, inplace=True)
-        # reset index for the new dataframe
-        self.house_price.reset_index(drop=True, inplace=True)
+        # self.house_price.drop(columns=self.categorical_features, inplace=True)
+        # # reset index for the new dataframe
+        # self.house_price.reset_index(drop=True, inplace=True)
 
         # ---   TIME ---
         # A voir ce que c'est
         # lets create a constant time
-        self.tm = datetime.time(10, 10)
-
-        # convert the dateSold to unix timestamp
-        self.house_price.dateSold = self.house_price.dateSold.apply(
-            lambda x: datetime.datetime.combine(x, self.tm).timestamp()
-        )
-
-        # reassigning all the numerical features to the numerical_features variable as a list
-        self.numerical_features = list(self.df.select_dtypes(include=[np.number]).columns.values)
-        print(self.house_price.shape)
+        # self.tm = datetime.time(10, 10)
+        #
+        # # convert the dateSold to unix timestamp
+        # self.house_price.dateSold = self.house_price.dateSold.apply(
+        #     lambda x: datetime.datetime.combine(x, self.tm).timestamp()
+        # )
+        #
+        # # reassigning all the numerical features to the numerical_features variable as a list
+        # self.numerical_features = list(self.df.select_dtypes(include=[np.number]).columns.values)
+        # print(self.house_price.shape)
 
     def get_df(self):
         return self.df
@@ -151,6 +153,43 @@ class GetDataFrame:
         # removing it from numerical feature list
         self.numerical_features = [i for i in self.numerical_features if i not in cols_to_categorical]
 
+    def __ordinal_encode(self) -> None:
+        """ Convert nominal features into ordinal features, mandatory for some models
+
+        :return:
+        """
+        ordinal_mappings = {
+            "MSSubClass": ['20', '30', '40', '45', '50', '60', '70', '75',
+                           '80', '85', '90', '120', '160', '180', '190'],
+            "ExterQual": ['Fa', 'TA', 'Gd', 'Ex'],
+            "LotShape": ['Reg', 'IR1', 'IR2', 'IR3'],
+            "BsmtQual": ['Fa', 'TA', 'Gd', 'Ex'],
+            "BsmtCond": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+            "BsmtExposure": ['None', 'No', 'Mn', 'Av', 'Gd'],
+            "BsmtFinType1": ['None', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
+            "BsmtFinType2": ['None', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
+            "HeatingQC": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+            "Functional": ['None', 'Sev', 'Maj2', 'Maj1', 'Mod', 'Min2', 'Min1', 'Typ'],
+            "FireplaceQu": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+            "KitchenQual": ['Fa', 'TA', 'Gd', 'Ex'],
+            "GarageFinish": ['None', 'Unf', 'RFn', 'Fin'],
+            "GarageQual": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+            "GarageCond": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
+            "PoolQC": ['None', 'Fa', 'Gd', 'Ex'],
+            "Fence": ['None', 'MnWw', 'GdWo', 'MnPrv', 'GdPrv'],
+        }
+        encoder = OrdinalEncoder(
+            categories=list(ordinal_mappings.values()),
+            handle_unknown='use_encoded_value',
+            unknown_value=np.nan
+        )
+        test = encoder.fit_transform(self.df.loc[:, ordinal_mappings.keys()])
+
+        X_ExT2_grades_unique = np.unique(test[:, 16])
+        grades_encode = dict(zip(ordinal_mappings['Fence'], X_ExT2_grades_unique))
+        print(grades_encode)
+        print(self.df.Fence.unique())
+
     def get_columns_to_drop(self) -> List[str]:
         """Get the features that hold more than 90% of its data with a same value
 
@@ -164,7 +203,7 @@ class GetDataFrame:
         return drop_cols
 
     def feature_outlier_make_count(self, to_print=False):
-        # Can use z-score or interquartile range
+        # Can use z-score or inter quartile range
         self.feature_outlier_count = {
             "1stFlrSF": 1,
             "BsmtFinSF1": 2,

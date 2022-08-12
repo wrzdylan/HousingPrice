@@ -50,7 +50,7 @@ Neural network:
   - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec .mode()          
 - [] Transform variables types
   - [X] Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
-  - [] LabelEncoder some categorical variables :
+  - [] Label Encoder pour certaine variable:
       ```python
       from sklearn.preprocessing import LabelEncoder
       cols = ('FireplaceQu', 'BsmtQual', 'BsmtCond', 'GarageQual', 'GarageCond', 
@@ -85,6 +85,11 @@ df = pd.get_dummies(df)
 print(df.shape)
 ```
 - [] Ajouter quelques features liées aux date, par exemple, différence entre date de construction, date d'agrandissement et maintenant
+- [] Prendre en compte le test set pour tout ce qui est encoding, ...
+
+
+## Amélioration possible
+Prendre en compte l'inflation et le pouvoir d'achat
 
 
 ## Lexique
@@ -99,3 +104,8 @@ print(df.shape)
 - An ordinal variable has a clear ordering of the categories (ex: wages)
 - `.factorize()` transforme des valeurs nominales en numériques mais continues, un model va alors donner plus ou moins d'importance en fonction de sa grandeur
 Pour cette raison, on utilise plutôt le `One-Hot Encoding`, celui-ci va créer plusieurs features et les remplir avec des 0 et des 1, il y a néanmoins une forte augmentation des dimensions
+- Le Label Encoder permet de convertir une variable nominale en variable numérique ordonnée. 
+  - OrdinalEncoder is for 2D data with the shape (n_samples, n_features)
+  - LabelEncoder is for 1D data with the shape (n_samples,)
+- Le One-Hot Encoding crée une variable binaire pour chaque catégorie mais cette représentation est redondante car on a pas besoin d'une variable pour chaque catégorie pour savoir dans laquelle elle appartient
+- Dummy variable représente C catégories avec C-1 variables binaires, doit être utilisé pour certain model comme les régressions linéaires
