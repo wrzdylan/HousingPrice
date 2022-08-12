@@ -49,9 +49,9 @@ Neural network:
   - [X] Functional by Typ          
   - [X] Peut drop 'Utilities' car uniquement la même valeur           
   - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec .mode()          
-- [] Transform variables types
+- [X] Transform variables types
   - [X] Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
-  - [] Label Encoder pour certaine variable:
+  - [X] Ordinal Encoder pour certaine variable:
       ```python
       from sklearn.preprocessing import LabelEncoder
       cols = ('FireplaceQu', 'BsmtQual', 'BsmtCond', 'GarageQual', 'GarageCond', 
@@ -69,25 +69,13 @@ Neural network:
       print('Shape all_data: {}'.format(all_data.shape))
       ```
 - [X] Ajoute feature 'totalSF' car influe beaucoup sur le prix
-- [] Regarde le skew de chaque feature numeric et la rend plus normale :
-```python
-numeric_feats = df.dtypes[df.dtypes != "object"].index
-
-# Check the skew of all numerical features
-skewed_feats = df[numeric_feats].apply(lambda x: skew(x.dropna())).sort_values(ascending=False)
-skewness = pd.DataFrame({'Skew' :skewed_feats})
-
-skewed_features = skewness.index
-df[skewed_features] = np.log1p(df[skewed_features])
-```
-- [] getting dummy categorical features, valeur numérique qui représente une catégorie
-```python
-df = pd.get_dummies(df)
-print(df.shape)
-```
+- [X] Regarde le skew de chaque feature numeric et la rend plus normale 
+- [X] Dummys
 - [] Ajouter quelques features liées aux date, par exemple, différence entre date de construction, date d'agrandissement et maintenant
 - [] Prendre en compte le test set pour tout ce qui est encoding, ...
 
+log1p vs boxcox1p lequel utiliser ?
+normalize avant ou après Ordinal Encoder ?
 
 ## Amélioration possible
 Prendre en compte l'inflation et le pouvoir d'achat

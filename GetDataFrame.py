@@ -46,11 +46,11 @@ class GetDataFrame:
         # --- Clean outliers ---
         self.fix_outliers()
 
-        # --- Transform variables types ---
-        self.__numeric_vars_to_categorical()
-
         # --- fix skewed numeric features ---
         self.transform_skewed_features()
+
+        # --- Transform variables types ---
+        self.__numeric_vars_to_categorical()
 
         # --- Ordinal variables ---
         self.__ordinal_encode()
@@ -124,7 +124,7 @@ class GetDataFrame:
 
         :return:
         """
-        cols_to_categorical = ["MSSubClass", "OverallCond", "YrSold", "MoSold"]
+        cols_to_categorical = ["MSSubClass", "YrSold", "MoSold"]
         self.df[cols_to_categorical] = self.df[cols_to_categorical].astype(str)
 
         # adding MSSubClass to categorical Feature list
@@ -171,7 +171,7 @@ class GetDataFrame:
             lambda x: skew(x.dropna())
         ).sort_values(ascending=False)
 
-        high_skew = skewed_feats[skewed_feats > 0.5]
+        high_skew = skewed_feats[skewed_feats > 0.75]
         skew_index = high_skew.index
 
         for i in skew_index:
