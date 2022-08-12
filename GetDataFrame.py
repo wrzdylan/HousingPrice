@@ -5,6 +5,8 @@ import pandas as pd
 import numpy as np
 import warnings
 from typing import List
+from scipy.stats import skew, boxcox_normmax
+from scipy.special import boxcox1p
 from sklearn.preprocessing import OrdinalEncoder
 
 warnings.filterwarnings("ignore")
@@ -47,37 +49,14 @@ class GetDataFrame:
         # --- Transform variables types ---
         self.__numeric_vars_to_categorical()
 
+        # --- fix skewed numeric features ---
+        self.transform_skewed_features()
+
         # --- Ordinal variables ---
         self.__ordinal_encode()
 
-        print(self.categorical_features)
-
-        # ---> I'm HERE <---
-        # self.df = pd.get_dummies(self.df)
-
-        # created dummy variables for categorical features
-        # self.house_price = pd.concat(
-        #     [self.df, pd.get_dummies(self.df[self.categorical_features], drop_first=True)], axis=1
-        # )
-
-        # drop the actual categorical feature from list
-        # self.house_price.drop(columns=self.categorical_features, inplace=True)
-        # # reset index for the new dataframe
-        # self.house_price.reset_index(drop=True, inplace=True)
-
-        # ---   TIME ---
-        # A voir ce que c'est
-        # lets create a constant time
-        # self.tm = datetime.time(10, 10)
-        #
-        # # convert the dateSold to unix timestamp
-        # self.house_price.dateSold = self.house_price.dateSold.apply(
-        #     lambda x: datetime.datetime.combine(x, self.tm).timestamp()
-        # )
-        #
-        # # reassigning all the numerical features to the numerical_features variable as a list
-        # self.numerical_features = list(self.df.select_dtypes(include=[np.number]).columns.values)
-        # print(self.house_price.shape)
+        # --- dummy categorical features
+        self.df = pd.get_dummies(self.df)
 
     def get_df(self):
         return self.df
@@ -159,8 +138,6 @@ class GetDataFrame:
         :return:
         """
         ordinal_mappings = {
-            "MSSubClass": ['20', '30', '40', '45', '50', '60', '70', '75',
-                           '80', '85', '90', '120', '160', '180', '190'],
             "ExterQual": ['Fa', 'TA', 'Gd', 'Ex'],
             "LotShape": ['Reg', 'IR1', 'IR2', 'IR3'],
             "BsmtQual": ['Fa', 'TA', 'Gd', 'Ex'],
@@ -183,12 +160,22 @@ class GetDataFrame:
             handle_unknown='use_encoded_value',
             unknown_value=np.nan
         )
-        test = encoder.fit_transform(self.df.loc[:, ordinal_mappings.keys()])
+        self.df.loc[:, ordinal_mappings.keys()] = encoder.fit_transform(self.df.loc[:, ordinal_mappings.keys()])
 
-        X_ExT2_grades_unique = np.unique(test[:, 16])
-        grades_encode = dict(zip(ordinal_mappings['Fence'], X_ExT2_grades_unique))
-        print(grades_encode)
-        print(self.df.Fence.unique())
+    def transform_skewed_features(self) -> None:
+        """ Use scipy function boxcox1p to normalize skewed features
+
+        :return:
+        """
+        skewed_feats = self.df[self.numerical_features].apply(
+            lambda x: skew(x.dropna())
+        ).sort_values(ascending=False)
+
+        high_skew = skewed_feats[skewed_feats > 0.5]
+        skew_index = high_skew.index
+
+        for i in skew_index:
+            self.df[i] = boxcox1p(self.df[i], boxcox_normmax(self.df[i] + 1))
 
     def get_columns_to_drop(self) -> List[str]:
         """Get the features that hold more than 90% of its data with a same value

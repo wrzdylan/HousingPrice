@@ -16,6 +16,7 @@ Pour cela elle a fait travailler un datascientist qui a préparé le set qui con
 ## Methodologie
 > [Lien Kaggle](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data?select=data_description.txt)
 - [Explication des algos](https://www.kaggle.com/code/faressayah/practical-introduction-to-10-regression-algorithm)
+- Voir [link](bayesian optimization package)
 
 
 ### Sélection des features
