@@ -21,14 +21,46 @@ Pour cela elle a fait travailler un datascientist qui a préparé le set qui con
 
 ### Sélection des features
 - [EDA](https://www.kaggle.com/code/pmarcelino/comprehensive-data-exploration-with-python)
+- [Sélection des features](https://www.kaggle.com/code/prashant111/comprehensive-guide-on-feature-selection)
+- [idem](https://machinelearningmastery.com/feature-selection-with-real-and-categorical-data/)
 - https://www.kaggle.com/code/serigne/stacked-regressions-top-4-on-leaderboard
 Etudier le SalePrice.      
 Pour la sélection des features, voir **ACP**.     
 Se demander si on pense à cette feature quand on achète une maison et quelle est son importance ? A ÉVITER car trop subjectif.     
-Faire la corrélation entre les features et SalePrice via un scatterplot par exemple et un boxplot pour les catégories. Heatmap ?        
 
 Missing data, random ou pattern ? 15% de données manquants sont trop, autant supprimer ces valeurs.    
 Faire attention aux outliers et les gérer car donne des informations mais peut modifier le comportement d'un model.
+
+La sélection des features permet d'améliorer la précision du model, réduit l'overfitting, plus facile et rapide pour le model 
+
+
+#### Filter methods
+Utilise des stats et regarde l'importance de chaque features par rapport à la target
+
+##### Basic methods
+On enlève les features avec quasiment les mêmes valeurs (peut utiliser VarianceThreshold de sklearn)
+
+##### Univariatge selection methods
+Utilise des tests statistiques univariate, estime le degré de dépendance linéaire entre 2 variables random, doit suivre une distribution Gaussienne
+Si numérique en input et output : Pearson’s correlation pour linear et Spearman’s rank coefficient dans le cas contraire
+
+Pearson’s correlation mesure la force d'une relation linéaire entre 2 variables, a une valeur entre -1 et 1
+Ratio entre la covariance de deux variables et le produit de leurs écart-type. C'est une mesure normalisé de la covariance.
+
+Les méthodes les plus populaire sont :
+- Select the top k variables: SelectKBest
+- Select the top percentile variables: SelectPercentile
+
+#### Wrapper methods
+RFE
+Try to use a subset of features and train a model using them. 
+Based on the inferences that we draw from the previous model, we decide to add or remove features from the subset.
+
+#### Embedded methods
+Takes care of each iteration of the model training process and carefully extract those features which contribute the most to the training for a particular iteration.
+Regularization methods are the most commonly used embedded methods which penalize a feature given a coefficient threshold.
+
+Most popular methods are: LASSO and RIDGE regression
 
 
 ### Prediction
@@ -73,6 +105,8 @@ Neural network:
 - [X] Dummys
 - [] Ajouter quelques features liées aux date, par exemple, différence entre date de construction, date d'agrandissement et maintenant
 - [] Prendre en compte le test set pour tout ce qui est encoding, ...
+- [] Drop les features avec une corrélation trop forte entre elles (ne pas prendre en compte SalePrice) car peut créer de l'overfitting
+
 
 log1p vs boxcox1p lequel utiliser ?
 normalize avant ou après Ordinal Encoder ?

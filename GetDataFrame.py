@@ -14,14 +14,10 @@ warnings.filterwarnings("ignore")
 
 class GetDataFrame:
     def __init__(self, df_name="train"):
-        self.categorical_columns = None
-        self.cat_feature = None
-        self.tm = None
         self.df: pd.DataFrame = pd.read_csv(f"dataset/{df_name}.csv")
         self.numerical_features: List[str] = list()
         self.categorical_features: List[str] = list()
         self.feature_outlier_count = {}
-        self.house_price = {}
 
     def get_cleaned_df(self):
         # Unnecessary for  the prediction process
@@ -140,7 +136,7 @@ class GetDataFrame:
         ordinal_mappings = {
             "ExterQual": ['Fa', 'TA', 'Gd', 'Ex'],
             "LotShape": ['Reg', 'IR1', 'IR2', 'IR3'],
-            "BsmtQual": ['Fa', 'TA', 'Gd', 'Ex'],
+            "BsmtQual": ['None', 'Fa', 'TA', 'Gd', 'Ex'],
             "BsmtCond": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
             "BsmtExposure": ['None', 'No', 'Mn', 'Av', 'Gd'],
             "BsmtFinType1": ['None', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
