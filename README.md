@@ -33,6 +33,9 @@ Faire attention aux outliers et les gérer car donne des informations mais peut 
 
 La sélection des features permet d'améliorer la précision du model, réduit l'overfitting, plus facile et rapide pour le model 
 
+Here increasing the size of the dataset to avoid overfitting refers to increasing the number of observations (or rows) and not the number of features (or columns). 
+Adding columns may lead to increase in the complexity of problem and therefore may result in more poor performance.
+
 
 #### Filter methods
 Utilise des stats et regarde l'importance de chaque features par rapport à la target
@@ -62,14 +65,35 @@ Regularization methods are the most commonly used embedded methods which penaliz
 
 Most popular methods are: LASSO and RIDGE regression
 
+Ridge and Lasso Regression are types of Regularization techniques. They work by penalizing the magnitude of coefficients of features along with minimizing the error between predicted and actual observations.
+Regularizations are techniques used to reduce the error by fitting a function appropriately on the given training set and avoid overfitting.
+Lasso regression comes with a parameter, alpha , and the higher the alpha , the most feature coefficients are zero.
+
+As the model complexity increases, the models tends to fit even smaller deviations in the training data set.
+
+Higher the alpha , the most feature coefficients are zero, the model complexity reduces, reduce overfitting but can cause underfitting as well. 
+A widely accept technique is cross-validation, i.e. the value of alpha is iterated over a range of values and the one giving higher cross-validation score is chosen.
+α would impact the magnitude of coefficients.
+Normalizing the inputs is generally a good idea in every type of regression
+
+- Ridge: It includes all (or none) of the features in the model. Thus, the major advantage of ridge regression is coefficient shrinkage and reducing model complexity. Prevent overfitting
+- Lasso: Along with shrinking coefficients, lasso performs feature selection as well. (Remember the ‘selection‘ in the lasso full-form?) 
+As we observed earlier, some of the coefficients become exactly zero, which is equivalent to the particular feature being excluded from the model. Marche bien avec de très grande quantités de features
+
 
 ### Prediction
-Approche linéaire :
-- https://www.kaggle.com/code/apapiu/regularized-linear-models
-XGBoost :
-- https://www.kaggle.com/code/ryanholbrook/feature-engineering-for-house-prices
-Neural network:
-- https://www.kaggle.com/code/zoupet/neural-network-model-for-house-prices-tensorflow
+- Approche linéaire :
+https://www.kaggle.com/code/apapiu/regularized-linear-models
+Pour voir si un modèle de régression linéaire est approprié, il faut voir les résidues
+Residual = Observed value - Predicted value 
+If the points in a residual plot are randomly dispersed around the horizontal axis, a linear regression model is appropriate for the data; otherwise, a nonlinear model is more appropriate.
+[Lien residuals](https://stattrek.com/regression/residual-analysis?Tutorial=AP)
+
+- XGBoost :
+https://www.kaggle.com/code/ryanholbrook/feature-engineering-for-house-prices
+
+- Neural network:
+https://www.kaggle.com/code/zoupet/neural-network-model-for-house-prices-tensorflow
 
 
 ## Clean

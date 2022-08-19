@@ -36,14 +36,14 @@ class GetDataFrame:
         # --- Fill NA values ---
         self.__imputing_missing_values()
 
+        # --- fix skewed numeric features ---
+        self.transform_skewed_features()
+
         # --- Add features ---
         self.__add_features()
 
         # --- Clean outliers ---
         self.fix_outliers()
-
-        # --- fix skewed numeric features ---
-        self.transform_skewed_features()
 
         # --- Transform variables types ---
         self.__numeric_vars_to_categorical()
@@ -100,19 +100,33 @@ class GetDataFrame:
         self.df["TotalFlrSFAbvGrd"] = self.df["1stFlrSF"] + self.df["2ndFlrSF"]
         self.df["TotalSF"] = self.df["TotalBsmtSF"] + self.df["TotalFlrSFAbvGrd"]
 
+        self.df['TotalSqrFootage'] = (
+                self.df['BsmtFinSF1'] + self.df['BsmtFinSF2'] +
+                self.df['1stFlrSF'] + self.df['2ndFlrSF']
+        )
+
+        self.df['YrBltAndRemod'] = self.df['YearBuilt'] + self.df['YearRemodAdd']
+
         self.df["LivLotRatio"] = self.df.GrLivArea / self.df.LotArea
 
         self.df["Spaciousness"] = self.df["TotalFlrSFAbvGrd"] / self.df.TotRmsAbvGrd
 
         # Adding all the bathrooms
-        self.df["TotalBath"] = self.df[
-            ["BsmtFullBath", "BsmtHalfBath", "FullBath", "HalfBath"]
-        ].sum(axis=1)
+        self.df["TotalBath"] = (
+                self.df['FullBath'] + (0.5 * self.df['HalfBath']) +
+                self.df['BsmtFullBath'] + (0.5 * self.df['BsmtHalfBath'])
+        )
 
         # Adding square feet of all Porch
         self.df["TotalPorchSF"] = self.df[
             ["OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "WoodDeckSF"]
         ].sum(axis=1)
+
+        self.df['has_pool'] = self.df['PoolArea'].apply(lambda x: 1 if x > 0 else 0)
+        self.df['has_2nd_floor'] = self.df['2ndFlrSF'].apply(lambda x: 1 if x > 0 else 0)
+        self.df['has_garage'] = self.df['GarageArea'].apply(lambda x: 1 if x > 0 else 0)
+        self.df['has_bsmt'] = self.df['TotalBsmtSF'].apply(lambda x: 1 if x > 0 else 0)
+        self.df['has_fireplace'] = self.df['Fireplaces'].apply(lambda x: 1 if x > 0 else 0)
 
     def __numeric_vars_to_categorical(self) -> None:
         """ Transform MSSubClass, OverallCond, YrSold, MoSold into categorical because
