@@ -36,9 +36,6 @@ class GetDataFrame:
         # --- Fill NA values ---
         self.__imputing_missing_values()
 
-        # --- fix skewed numeric features ---
-        self.transform_skewed_features()
-
         # --- Add features ---
         self.__add_features()
 
@@ -47,6 +44,9 @@ class GetDataFrame:
 
         # --- Transform variables types ---
         self.__numeric_vars_to_categorical()
+
+        # --- fix skewed numeric features ---
+        self.transform_skewed_features()
 
         # --- Ordinal variables ---
         self.__ordinal_encode()
@@ -147,24 +147,31 @@ class GetDataFrame:
 
         :return:
         """
+        five_levels = ["Po", "Fa", "TA", "Gd", "Ex"]
+
         ordinal_mappings = {
-            "ExterQual": ['Fa', 'TA', 'Gd', 'Ex'],
+            "ExterQual": five_levels,
             "LotShape": ['Reg', 'IR1', 'IR2', 'IR3'],
-            "BsmtQual": ['None', 'Fa', 'TA', 'Gd', 'Ex'],
-            "BsmtCond": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
-            "BsmtExposure": ['None', 'No', 'Mn', 'Av', 'Gd'],
-            "BsmtFinType1": ['None', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
-            "BsmtFinType2": ['None', 'Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
-            "HeatingQC": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
-            "Functional": ['None', 'Sev', 'Maj2', 'Maj1', 'Mod', 'Min2', 'Min1', 'Typ'],
-            "FireplaceQu": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
-            "KitchenQual": ['Fa', 'TA', 'Gd', 'Ex'],
-            "GarageFinish": ['None', 'Unf', 'RFn', 'Fin'],
-            "GarageQual": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
-            "GarageCond": ['None', 'Po', 'Fa', 'TA', 'Gd', 'Ex'],
-            "PoolQC": ['None', 'Fa', 'Gd', 'Ex'],
-            "Fence": ['None', 'MnWw', 'GdWo', 'MnPrv', 'GdPrv'],
+            "BsmtQual": five_levels,
+            "BsmtCond": five_levels,
+            "BsmtExposure": ['No', 'Mn', 'Av', 'Gd'],
+            "BsmtFinType1": ['Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
+            "BsmtFinType2": ['Unf', 'LwQ', 'Rec', 'BLQ', 'ALQ', 'GLQ'],
+            "HeatingQC": five_levels,
+            "Functional": ['Sev', 'Maj2', 'Maj1', 'Mod', 'Min2', 'Min1', 'Typ'],
+            "FireplaceQu": five_levels,
+            "KitchenQual": five_levels,
+            "GarageFinish": ['Unf', 'RFn', 'Fin'],
+            "GarageQual": five_levels,
+            "GarageCond": five_levels,
+            "PoolQC": five_levels[1:],
+            "Fence": ['MnWw', 'GdWo', 'MnPrv', 'GdPrv'],
+            "LandSlope": ['Sev', 'Mod', 'Gtl'],
+            "PavedDrive": ['N', 'P', 'Y'],
+            "CentralAir": ['N', 'Y'],
         }
+        ordinal_mappings = {key: ["None"] + value for key, value in ordinal_mappings.items()}
+
         encoder = OrdinalEncoder(
             categories=list(ordinal_mappings.values()),
             handle_unknown='use_encoded_value',

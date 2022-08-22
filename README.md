@@ -17,6 +17,7 @@ Pour cela elle a fait travailler un datascientist qui a préparé le set qui con
 > [Lien Kaggle](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data?select=data_description.txt)
 - [Explication des algos](https://www.kaggle.com/code/faressayah/practical-introduction-to-10-regression-algorithm)
 - Voir [link](bayesian optimization package)
+- https://www.kaggle.com/code/ryanholbrook/feature-engineering-for-house-prices/notebook
 
 
 ### Sélection des features
@@ -156,3 +157,14 @@ Pour cette raison, on utilise plutôt le `One-Hot Encoding`, celui-ci va créer 
   - LabelEncoder is for 1D data with the shape (n_samples,)
 - Le One-Hot Encoding crée une variable binaire pour chaque catégorie mais cette représentation est redondante car on a pas besoin d'une variable pour chaque catégorie pour savoir dans laquelle elle appartient
 - Dummy variable représente C catégories avec C-1 variables binaires, doit être utilisé pour certain model comme les régressions linéaires
+
+
+## Final 
+- Test set add features, ... pour augmenter précision
+- Factoriser dans functions linear models
+- Voir unbalanced categories features (lasso)
+- Voir selection features importance (Random Forest)
+- Voir pour deuxieme model
+- Compute utility score
+- Other group statistics in Neighboorhood. We did the median of GrLivArea. Looking at mean, std, or count could be interesting. You could also try combining the group statistics with other features. Maybe the difference of GrLivArea and the median is important?
+- Peut utiliser PCA pour choisir de nouvelles features (Part 2)
