@@ -168,3 +168,4 @@ Pour cette raison, on utilise plutôt le `One-Hot Encoding`, celui-ci va créer 
 - Compute utility score
 - Other group statistics in Neighboorhood. We did the median of GrLivArea. Looking at mean, std, or count could be interesting. You could also try combining the group statistics with other features. Maybe the difference of GrLivArea and the median is important?
 - Peut utiliser PCA pour choisir de nouvelles features (Part 2)
+- Regarder MSZoning_C (all) et pourquoi il est si unbalanced
