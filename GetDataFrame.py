@@ -190,7 +190,7 @@ class GetDataFrame:
             lambda x: skew(x.dropna())
         ).sort_values(ascending=False)
 
-        high_skew = skewed_feats[skewed_feats > 0.75]
+        high_skew = skewed_feats[skewed_feats > 0.5]
         skew_index = high_skew.index
 
         for i in skew_index:
