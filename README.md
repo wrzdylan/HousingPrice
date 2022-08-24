@@ -15,6 +15,7 @@ Pour cela elle a fait travailler un datascientist qui a préparé le set qui con
 
 ## Methodologie
 > [Lien Kaggle](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques/data?select=data_description.txt)
+- [Explication](https://www.kaggle.com/code/masumrumi/a-detailed-regression-guide-with-house-pricing/notebook#Goals)
 - [Explication des algos](https://www.kaggle.com/code/faressayah/practical-introduction-to-10-regression-algorithm)
 - Voir [link](bayesian optimization package)
 - https://www.kaggle.com/code/ryanholbrook/feature-engineering-for-house-prices/notebook
@@ -160,12 +161,30 @@ Pour cette raison, on utilise plutôt le `One-Hot Encoding`, celui-ci va créer 
 
 
 ## Final 
-- Test set add features, ... pour augmenter précision
 - Factoriser dans functions linear models
 - Voir unbalanced categories features (lasso)
-- Voir selection features importance (Random Forest)
 - Voir pour deuxieme model
-- Compute utility score
-- Other group statistics in Neighboorhood. We did the median of GrLivArea. Looking at mean, std, or count could be interesting. You could also try combining the group statistics with other features. Maybe the difference of GrLivArea and the median is important?
-- Peut utiliser PCA pour choisir de nouvelles features (Part 2)
-- Regarder MSZoning_C (all) et pourquoi il est si unbalanced
+
+
+Vérifier si Utilities est bien drop par constant features
+Vérifier forward selection
+VarianceThreshold(threshold=0.01) est-ce que ce threshold suffit ? Plutot mettre 4%
+
+'PoolQC','MiscFeature','Alley' faut-il les drops ?
+
+MoSold et YrSold n'ont pas d'impact sur SalePrice, ont-ils été drop ?
+
+On drop cols sur l'ensemble des données
+
+Voir corrélation entre GarageArea et Neighborhood
+
+what to do if new features have colinearity ?
+
+log sur train et test séparemment 
+
+ajouter robust scaler pour éviter les outliers ?
+from sklearn.preprocessing import RobustScaler
+cols = x.select_dtypes(np.number).columns
+transformer = RobustScaler().fit(x[cols])
+x[cols] = transformer.transform(x[cols])
+test[cols] = transformer.transform(test[cols])

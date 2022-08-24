@@ -13,20 +13,18 @@ warnings.filterwarnings("ignore")
 
 
 class GetDataFrame:
-    def __init__(self, df_name="train"):
-        self.df: pd.DataFrame = pd.read_csv(f"dataset/{df_name}.csv")
+    def __init__(self, dataset_name="train"):
+        self.dataset_name: str = dataset_name
+        self.df: pd.DataFrame = pd.read_csv(f"dataset/{dataset_name}.csv").drop(columns=["Id"])
+
         self.numerical_features: List[str] = list()
         self.categorical_features: List[str] = list()
         self.feature_outlier_count = {}
 
     def get_cleaned_df(self):
-        # Unnecessary for  the prediction process
-        self.df.drop("Id", axis=1, inplace=True)
-        # All records are "AllPub"
-        self.df.drop("Utilities", axis=1, inplace=True)
-
         # SalePrice is skewed then we use log because the min value is above 30k, no need of log1p
-        self.df["SalePrice"] = np.log(self.df["SalePrice"])
+        if self.dataset_name == "train":
+            self.df["SalePrice"] = np.log(self.df["SalePrice"])
 
         # create a list of numerical features
         self.numerical_features = list(self.df.select_dtypes(include=[np.number]).columns.values)
@@ -40,7 +38,8 @@ class GetDataFrame:
         self.__add_features()
 
         # --- Clean outliers ---
-        self.fix_outliers()
+        if self.dataset_name == "train":
+            self.fix_outliers()
 
         # --- Transform variables types ---
         self.__numeric_vars_to_categorical()
@@ -63,17 +62,20 @@ class GetDataFrame:
 
         :return:
         """
-        # transform instead of apply and group by with one index
-        self.df["LotFrontage"] = self.df.groupby(["Neighborhood"])["LotFrontage"].transform(
-            lambda x: x.fillna(x.median())
-        )
-
         # date description says default value is Typical
         self.df["Functional"] = self.df["Functional"].fillna("Typ")
 
+        # For correlated relationship
+        self.df["LotFrontage"] = self.df.groupby("Neighborhood")["LotFrontage"].transform(
+            lambda x: x.fillna(x.median())
+        )
+        self.df["GarageArea"] = self.df.groupby("Neighborhood")["GarageArea"].transform(
+            lambda x: x.fillna(x.median())
+        )
+        self.df['MSZoning'] = self.df.groupby('MSSubClass')['MSZoning'].transform(lambda x: x.fillna(x.mode()[0]))
+
         # Columns to fill with the most common value
         na_cols_add_most_common = [
-            "MSZoning",
             "Electrical",
             "SaleType",
             "KitchenQual",
