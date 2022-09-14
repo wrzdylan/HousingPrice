@@ -35,7 +35,9 @@ class GetDataFrame:
         self.__imputing_missing_values()
 
         # --- Add features ---
+        print("features before", self.df.shape)
         self.__add_features()
+        print("features after", self.df.shape)
 
         # --- Clean outliers ---
         if self.dataset_name == "train":
@@ -51,7 +53,9 @@ class GetDataFrame:
         self.__ordinal_encode()
 
         # --- dummy categorical features
+        print("features before dummies", self.df.shape)
         self.df = pd.get_dummies(self.df)
+        print("features after dummies", self.df.shape)
 
     def get_df(self):
         return self.df
@@ -100,14 +104,15 @@ class GetDataFrame:
         """
         # Total surface feature, very important to determine house prices  + add vectorization
         self.df["TotalFlrSFAbvGrd"] = self.df["1stFlrSF"] + self.df["2ndFlrSF"]
+        
         self.df["TotalSF"] = self.df["TotalBsmtSF"] + self.df["TotalFlrSFAbvGrd"]
 
-        self.df['TotalSqrFootage'] = (
-                self.df['BsmtFinSF1'] + self.df['BsmtFinSF2'] +
-                self.df['1stFlrSF'] + self.df['2ndFlrSF']
+        self.df["TotalSqrFootage"] = (
+                self.df["BsmtFinSF1"] + self.df["BsmtFinSF2"] +
+                self.df["1stFlrSF"] + self.df["2ndFlrSF"]
         )
 
-        self.df['YrBltAndRemod'] = self.df['YearBuilt'] + self.df['YearRemodAdd']
+        self.df["YrBltAndRemod"] = self.df["YearBuilt"] + self.df["YearRemodAdd"]
 
         self.df["LivLotRatio"] = self.df.GrLivArea / self.df.LotArea
 
@@ -115,8 +120,8 @@ class GetDataFrame:
 
         # Adding all the bathrooms
         self.df["TotalBath"] = (
-                self.df['FullBath'] + (0.5 * self.df['HalfBath']) +
-                self.df['BsmtFullBath'] + (0.5 * self.df['BsmtHalfBath'])
+                self.df["FullBath"] + (0.5 * self.df["HalfBath"]) +
+                self.df["BsmtFullBath"] + (0.5 * self.df["BsmtHalfBath"])
         )
 
         # Adding square feet of all Porch
@@ -124,11 +129,18 @@ class GetDataFrame:
             ["OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "WoodDeckSF"]
         ].sum(axis=1)
 
-        self.df['has_pool'] = self.df['PoolArea'].apply(lambda x: 1 if x > 0 else 0)
-        self.df['has_2nd_floor'] = self.df['2ndFlrSF'].apply(lambda x: 1 if x > 0 else 0)
-        self.df['has_garage'] = self.df['GarageArea'].apply(lambda x: 1 if x > 0 else 0)
-        self.df['has_bsmt'] = self.df['TotalBsmtSF'].apply(lambda x: 1 if x > 0 else 0)
-        self.df['has_fireplace'] = self.df['Fireplaces'].apply(lambda x: 1 if x > 0 else 0)
+        self.df["has_pool"] = self.df["PoolArea"].apply(lambda x: 1 if x > 0 else 0)
+        self.df["has_2nd_floor"] = self.df["2ndFlrSF"].apply(lambda x: 1 if x > 0 else 0)
+        self.df["has_garage"] = self.df["GarageArea"].apply(lambda x: 1 if x > 0 else 0)
+        self.df["has_bsmt"] = self.df["TotalBsmtSF"].apply(lambda x: 1 if x > 0 else 0)
+        self.df["has_fireplace"] = self.df["Fireplaces"].apply(lambda x: 1 if x > 0 else 0)
+        
+        cols = ["1stFlrSF", "2ndFlrSF", "TotalBsmtSF", "TotalFlrSFAbvGrd", "BsmtFinSF1", "BsmtFinSF2", "1stFlrSF", "2ndFlrSF", "YearBuilt", "YearRemodAdd", "FullBath", "HalfBath", "BsmtFullBath", "BsmtHalfBath", "OpenPorchSF", "EnclosedPorch", "3SsnPorch", "ScreenPorch", "WoodDeckSF", "GarageArea"]
+        
+        self.numerical_features = [v for v in self.numerical_features if v not in cols]
+        self.categorical_features = [v for v in self.categorical_features if v not in cols]
+        
+        self.df = self.df.drop(columns=cols)
 
     def __numeric_vars_to_categorical(self) -> None:
         """ Transform MSSubClass, OverallCond, YrSold, MoSold into categorical because
@@ -209,23 +221,14 @@ class GetDataFrame:
         return drop_cols
 
     def feature_outlier_make_count(self, to_print=False):
-        # Can use z-score or inter quartile range
         self.feature_outlier_count = {
-            "1stFlrSF": 1,
-            "BsmtFinSF1": 2,
-            "BsmtFinSF2": 1,
-            "EnclosedPorch": 2,
-            "GarageArea": 4,
             "GrLivArea": 4,
             "LotArea": 7,
             "LotFrontage": 2,
             "MasVnrArea": 1,
-            "OpenPorchSF": 3,
-            "TotalBsmtSF": 4,
             "TotRmsAbvGrd": 1,
             "TotalSF": 2,
             "TotalPorchSF": 1,
-            "WoodDeckSF": 3,
         }
 
         if to_print:
