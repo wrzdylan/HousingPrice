@@ -98,45 +98,6 @@ https://www.kaggle.com/code/ryanholbrook/feature-engineering-for-house-prices
 https://www.kaggle.com/code/zoupet/neural-network-model-for-house-prices-tensorflow
 
 
-## Clean
-- [X] Ajoute log SalePrice in cleaned data
-- [X] Missing values
-  - [X] Remplace NA par None        
-  - [X] Sauf LotFrontage, on fait la médiane de cette variable par rapport au voisinage car probablement similaire
-  - [X] Pour 'MasVnrArea', 'GarageYrBlt', 'GarageArea', 'GarageCars', 'BsmtFinSF1', 'BsmtFinSF2', 'BsmtUnfSF','TotalBsmtSF', 'BsmtFullBath', 'BsmtHalfBath' remplace NA par 0         
-  - [X] Functional by Typ          
-  - [X] Peut drop 'Utilities' car uniquement la même valeur           
-  - [X] MSZoning, Electrical, SaleType, KitchenQual, Exterior1st and Exterior2nd  donne la valeur la plus fréquente avec .mode()          
-- [X] Transform variables types
-  - [X] Numérique into categorical : MSSubClass, OverallCond, YrSold, MoSold -> `all_data['MSSubClass'] = all_data['MSSubClass'].apply(str)`
-  - [X] Ordinal Encoder pour certaine variable:
-      ```python
-      from sklearn.preprocessing import LabelEncoder
-      cols = ('FireplaceQu', 'BsmtQual', 'BsmtCond', 'GarageQual', 'GarageCond', 
-              'ExterQual', 'ExterCond','HeatingQC', 'PoolQC', 'KitchenQual', 'BsmtFinType1', 
-              'BsmtFinType2', 'Functional', 'Fence', 'BsmtExposure', 'GarageFinish', 'LandSlope',
-              'LotShape', 'PavedDrive', 'Street', 'Alley', 'CentralAir', 'MSSubClass', 'OverallCond', 
-              'YrSold', 'MoSold')
-      # process columns, apply LabelEncoder to categorical features
-      for c in cols:
-          lbl = LabelEncoder() 
-          lbl.fit(list(all_data[c].values)) 
-          all_data[c] = lbl.transform(list(all_data[c].values))
-    
-      # shape        
-      print('Shape all_data: {}'.format(all_data.shape))
-      ```
-- [X] Ajoute feature 'totalSF' car influe beaucoup sur le prix
-- [X] Regarde le skew de chaque feature numeric et la rend plus normale 
-- [X] Dummys
-- [] Ajouter quelques features liées aux date, par exemple, différence entre date de construction, date d'agrandissement et maintenant
-- [] Prendre en compte le test set pour tout ce qui est encoding, ...
-- [] Drop les features avec une corrélation trop forte entre elles (ne pas prendre en compte SalePrice) car peut créer de l'overfitting
-
-
-log1p vs boxcox1p lequel utiliser ?
-normalize avant ou après Ordinal Encoder ?
-
 ## Amélioration possible
 Prendre en compte l'inflation et le pouvoir d'achat
 

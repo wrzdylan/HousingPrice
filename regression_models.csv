@@ -1,0 +1,3 @@
+,date,model_name,params,rmse_train,rmse_test,comment
+1,2022-09-24 13:33:37,ElasticNetCV(),"{'alpha': 0.0009, 'l1ratio': 1.0}",1.1329683520822913,1.1440617488301217,After features selection
+2,2022-09-24 13:33:37,XGBRegressor(),"{'max_depth': 8, 'learning_rate': 0.008233380755376406, 'n_estimators': 4833, 'min_child_weight': 3, 'colsample_bytree': 0.46530271459578953, 'subsample': 0.8383223445017893, 'reg_alpha': 0.6824757868262421, 'reg_lambda': 12.006481606800955}",1.1344358107423698,1.1500445803035495,After features selection
